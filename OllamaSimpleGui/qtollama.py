@@ -19,6 +19,9 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
 
+def getOllamaBaseUrl():
+    return "http://localhost:11434"
+
 class OllamaWorker(QThread):
     """Thread worker pour exécuter les requêtes Ollama sans bloquer l'UI"""
     
@@ -30,8 +33,7 @@ class OllamaWorker(QThread):
         super().__init__()
         self.prompt = prompt
         self.model_name = model_name
-        self.base_url = "http://localhost:11434"
-        self.model = self.getollamamodel()
+        self.base_url = getOllamaBaseUrl()
 
     def getollamamodel(self):
         response = requests.get(f"{self.base_url}/api/tags")
@@ -41,26 +43,6 @@ class OllamaWorker(QThread):
         models = [model['name'] for model in data.get('models', [])]
 
         return models
-
-    def getollammodelinfo(self):
-        response = requests.get(f"{self.base_url}/api/tags")
-        response.raise_for_status()
-
-        data = response.json()
-        models_info = []
-
-        for model in data.get('models', []):
-            model_info = {
-                'name': model['name'],
-                'modified_at': model.get('modified_at', 'N/A'),
-                'size': model.get('size', 0),
-                'size_gb': model.get('size', 0) / (1024**3),  # Conversion en GB
-                'digest': model.get('digest', 'N/A')[:12],  # Premiers caractères
-            }
-            models_info.append(model_info)
-
-        pprint.pprint(models_info)
-        return models_info
 
     
     def run(self):
@@ -137,6 +119,10 @@ class OllamaChatApp(QMainWindow):
         for m in self.getollamamodel():
           self.modelchoice.addItem(m)
         input_layout.addWidget(self.modelchoice)
+
+        self.info_button = QPushButton("?")
+        self.info_button.clicked.connect(self.on_infomodel)
+        input_layout.addWidget(self.info_button)
         
         # Bouton Envoyer
         self.submit_button = QPushButton("Envoyer")
@@ -205,14 +191,44 @@ class OllamaChatApp(QMainWindow):
         """)
 
     def getollamamodel(self):
-        response = requests.get(f"http://localhost:11434/api/tags")
+        response = requests.get(f"{getOllamaBaseUrl()}/api/tags")
         response.raise_for_status()
 
         data = response.json()
         models = [model['name'] for model in data.get('models', [])]
 
+        self.getollammodelinfo()
         return models
 
+    def getollammodelinfo(self):
+        response = requests.get(f"{getOllamaBaseUrl()}/api/tags")
+        response.raise_for_status()
+
+        data = response.json()
+        models_info = []
+
+        for model in data.get('models', []):
+            model_info = {
+                'name': model['name'],
+                'modified_at': model.get('modified_at', 'N/A'),
+                'size': model.get('size', 0),
+                'size_gb': model.get('size', 0) / (1024**3),  # Conversion en GB
+                'digest': model.get('digest', 'N/A')[:12],  # Premiers caractères
+            }
+            models_info.append(model_info)
+
+        #pprint.pprint(models_info)
+        self._modelinfo = models_info
+
+
+
+    def on_infomodel(self):
+        try:
+           minfo = self._modelinfo[self.modelchoice.currentIndex()]
+           self.status_label.setText(" %s size: %d  " % (minfo["name"],minfo["size"] ))
+        except Exception as e:
+           print(e)
+           self.status_label.setText("❌ Erreur info model ")
     
     def on_submit(self):
         """Gère l'envoi de la question"""
