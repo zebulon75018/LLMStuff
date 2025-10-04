@@ -225,7 +225,7 @@ class OllamaChatApp(QMainWindow):
     def on_infomodel(self):
         try:
            minfo = self._modelinfo[self.modelchoice.currentIndex()]
-           self.status_label.setText(" %s size: %d  " % (minfo["name"],minfo["size"] ))
+           self.status_label.setText(f" {minfo['name']}   size: {minfo['size_gb']:.2f}  GB " )
         except Exception as e:
            print(e)
            self.status_label.setText("❌ Erreur info model ")
