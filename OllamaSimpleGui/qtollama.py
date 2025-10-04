@@ -9,7 +9,7 @@ import requests
 import pprint
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, 
-    QHBoxLayout, QLineEdit, QPushButton, QTextEdit, QLabel, QComboBox
+    QHBoxLayout, QLineEdit, QPushButton, QTextEdit, QLabel, QComboBox, QMessageBox
 )
 from PyQt5.QtCore import QThread, pyqtSignal, Qt
 from PyQt5.QtGui import QFont
@@ -118,6 +118,8 @@ class OllamaChatApp(QMainWindow):
         self.modelchoice = QComboBox()
         for m in self.getollamamodel():
           self.modelchoice.addItem(m)
+        self.modelchoice.currentIndexChanged.connect(self.on_model_changed)
+
         input_layout.addWidget(self.modelchoice)
 
         self.info_button = QPushButton("?")
@@ -221,11 +223,26 @@ class OllamaChatApp(QMainWindow):
         self._modelinfo = models_info
 
 
-
-    def on_infomodel(self):
+    def on_model_changed(self):
         try:
            minfo = self._modelinfo[self.modelchoice.currentIndex()]
            self.status_label.setText(f" {minfo['name']}   size: {minfo['size_gb']:.2f}  GB " )
+        except Exception as e:
+           print(e)
+           self.status_label.setText("❌ Erreur info model ")
+
+    def on_infomodel(self):
+        message = ""
+        try:
+           for m in self._modelinfo:
+               message = f"{message}\n size: {m['size_gb']:.2f} GB  {m['name']} "
+
+           dlg = QMessageBox(self)
+           dlg.setWindowTitle("Models")
+           dlg.setText(message)
+           dlg.exec()
+           #minfo = self._modelinfo[self.modelchoice.currentIndex()]
+           #self.status_label.setText(f" {minfo['name']}   size: {minfo['size_gb']:.2f}  GB " )
         except Exception as e:
            print(e)
            self.status_label.setText("❌ Erreur info model ")
