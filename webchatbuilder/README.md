@@ -79,3 +79,102 @@ Tu es un expert en développement web...
 ```
 
 L'application gère les erreurs et affiche des messages clairs si Ollama n'est pas démarré ou si le modèle n'est pas installé, et fournit un outil de débogage complet pour le pipeline Langchain et l'interaction web.
+
+
+
+Absolument ! Voici la conversion de votre description en un format Markdown structuré et facile à lire :
+
+---
+
+# ✨ Améliorations de l'Interface Utilisateur : Barre de Menu Complète
+
+L'application a été enrichie d'une barre de menu complète, offrant un accès intuitif à toutes les fonctionnalités et améliorant significativement l'expérience utilisateur.
+
+## 🎯 Nouvelle Barre de Menu (4 Menus)
+
+La barre de menu est structurée en quatre sections principales : **Fichier**, **Affichage**, **Outils** et **Aide**.
+
+### 📁 Menu Fichier
+
+Permet de gérer l'ouverture, le chargement et la sauvegarde des fichiers HTML.
+
+*   **Ouvrir HTML local** (`Ctrl+O`)
+    *   Charge un fichier `.html` ou `.htm` depuis le disque.
+    *   Affiche le contenu à la fois dans `QWebEngineView` (Aperçu) et dans l'éditeur de code.
+    *   Gère l'encodage `UTF-8` et les erreurs de lecture.
+*   **Charger depuis URL** (`Ctrl+U`)
+    *   Ouvre un dialogue pour saisir une URL.
+    *   Télécharge et affiche la page web dans `QWebEngineView`.
+    *   Récupère et affiche le code source HTML dans l'éditeur après le chargement.
+*   **Sauvegarder HTML** (`Ctrl+S`)
+    *   Effectue une sauvegarde rapide du code HTML actuel.
+    *   Mémorise le dernier chemin de sauvegarde utilisé.
+*   **Sauvegarder HTML sous...** (`Ctrl+Shift+S`)
+    *   Permet de choisir un nouvel emplacement et un nom de fichier pour la sauvegarde.
+*   **Exporter le code de l'éditeur** (`Ctrl+E`)
+    *   Sauvegarde spécifiquement le contenu de l'onglet "Code HTML" dans un fichier.
+*   **Quitter** (`Ctrl+Q`)
+    *   Ferme l'application.
+
+### 👁️ Menu Affichage
+
+Contrôle l'affichage et le zoom de la page web.
+
+*   **Recharger la page** (`F5`)
+    *   Rafraîchit le contenu de `QWebEngineView`.
+*   **Zoom avant** (`Ctrl++`)
+    *   Agrandit l'affichage de la page web.
+*   **Zoom arrière** (`Ctrl+-`)
+    *   Réduit l'affichage de la page web.
+*   **Réinitialiser zoom** (`Ctrl+0`)
+    *   Rétablit le niveau de zoom par défaut (100%).
+
+### 🔧 Menu Outils
+
+Propose des utilitaires pour interagir avec le contenu HTML et l'application.
+
+*   **Exécuter JavaScript personnalisé** (`Ctrl+J`)
+    *   Ouvre un dialogue permettant de saisir et d'exécuter du code JavaScript sur la page actuelle.
+*   **Inspecter HTML actuel** (`Ctrl+I`)
+    *   Affiche des statistiques et des informations sur le HTML actuellement rendu.
+*   **Effacer l'historique**
+    *   Supprime toutes les versions sauvegardées dans l'historique de génération. Une boîte de dialogue de confirmation est affichée.
+
+### ❓ Menu Aide
+
+Fournit des informations sur l'application et ses fonctionnalités.
+
+*   **À propos**
+    *   Affiche des informations générales sur l'application.
+*   **Raccourcis clavier** (`F1`)
+    *   Présente une liste complète des raccourcis clavier disponibles.
+
+## ✨ Fonctionnalités Clés et Améliorations
+
+*   **Gestion Robuste des Fichiers** : Prise en charge de l'ouverture et de la sauvegarde de fichiers HTML locaux avec gestion d'erreurs et mémorisation du chemin.
+*   **Chargement Web Complet** : Capacité de charger n'importe quelle page web via URL, affichant à la fois le rendu et le code source.
+*   **Contrôle de l'Affichage** : Fonctions de zoom et de rechargement intégrées pour une navigation fluide.
+*   **Outils de Développement** : Exécution de JavaScript personnalisé et inspection HTML facilitent le débogage et l'expérimentation.
+*   **Raccourcis Clavier Standardisés** : Toutes les actions courantes sont associées à des raccourcis clavier intuitifs pour une meilleure ergonomie.
+*   **Messages de Confirmation** : Des messages visuels confirment les actions importantes (sauvegarde, effacement d'historique).
+*   **Logging Intégré** : Toutes les actions de menu sont tracées et affichées dans l'onglet "Logs", assurant un suivi complet de l'activité de l'application.
+
+## 🎮 Exemples d'Utilisation
+
+1.  **Charger une page web existante :**
+    *   `Menu` → `Fichier` → `Charger depuis URL`
+    *   Entrer : `https://example.com`
+
+2.  **Ouvrir un template HTML local :**
+    *   `Menu` → `Fichier` → `Ouvrir HTML local`
+    *   Sélectionner votre fichier `.html` ou `.htm`.
+
+3.  **Modifier le code et sauvegarder :**
+    *   Modifier le code dans l'onglet "Code HTML".
+    *   `Menu` → `Fichier` → `Sauvegarder` (`Ctrl+S`).
+
+4.  **Tester du JavaScript personnalisé :**
+    *   `Menu` → `Outils` → `Exécuter JavaScript`
+    *   Entrer votre code JavaScript dans la boîte de dialogue.
+
+---
