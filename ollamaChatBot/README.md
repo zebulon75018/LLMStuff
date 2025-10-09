@@ -1,3 +1,8 @@
+
+## ollamaChatBot
+![OllamaSimpleGui](https://github.com/zebulon75018/LLMStuff/blob/main/img/chatbot.png?raw=true)
+
+
 # 🤖 ChatBot AI - Flask + LangChain + Ollama
 
 Application web de chatbot avec authentification, upload de PDFs et intelligence artificielle via LangChain et Ollama.
