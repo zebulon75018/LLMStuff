@@ -206,4 +206,3 @@ Ce projet est libre d'utilisation.
 
 ---
 
-**Développé avec ❤️ et IA**
