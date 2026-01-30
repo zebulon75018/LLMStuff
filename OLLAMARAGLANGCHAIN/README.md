@@ -1,5 +1,9 @@
 # Flask RAG Chatbot with Ollama, LangChain & Chroma
 
+![Ollamaragchroma](https://github.com/zebulon75018/LLMStuff/blob/main/img/ollamaragchroma.png?raw=true)
+
+
+
 A web-based Retrieval-Augmented Generation (RAG) chatbot built with Flask, LangChain, Ollama, and ChromaDB.
 
 This application allows users to:
