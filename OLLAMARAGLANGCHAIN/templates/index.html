@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Flask RAG (Ollama + LangChain + Chroma)</title>
+  <style>
+    body { font-family: system-ui, Arial; margin: 0; background:#f6f7fb; }
+    header { padding: 16px 20px; background: white; border-bottom: 1px solid #e6e8ef; }
+    main { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 14px; padding: 14px; }
+    .card { background: white; border: 1px solid #e6e8ef; border-radius: 12px; padding: 14px; }
+    .row { display:flex; gap:10px; }
+    textarea { width: 100%; min-height: 72px; resize: vertical; padding: 10px; }
+    button { padding: 10px 12px; cursor:pointer; }
+    .chatlog { display:flex; flex-direction:column; gap:10px; }
+    .msg { padding: 10px; border-radius: 10px; border: 1px solid #e6e8ef; background:#fff; }
+    .me { background:#eef6ff; }
+    .sources { font-size: 13px; color:#334; }
+    .pill { display:inline-block; font-size:12px; padding:2px 8px; border-radius:999px; background:#f1f3f9; margin-right:6px; }
+    .muted { color:#667; font-size: 13px; }
+    pre { white-space: pre-wrap; word-break: break-word; }
+    .docitem { padding:10px; border:1px solid #e6e8ef; border-radius:10px; margin-top:8px; }
+    a { color:#1a5fd0; text-decoration:none; }
+  </style>
+</head>
+<body>
+<header>
+  <div style="display:flex; align-items:baseline; justify-content:space-between;">
+    <h2 style="margin:0;">Chatbot RAG — Ollama + LangChain + Chroma</h2>
+    <span class="muted">Upload PDF → enrichit la base → chat avec sources</span>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <h3>Chat</h3>
+    <div id="chatlog" class="chatlog"></div>
+
+    <div class="row" style="margin-top:10px;">
+      <textarea id="msg" placeholder="Pose une question sur les PDF ingérés..."></textarea>
+    </div>
+    <div class="row" style="margin-top:8px;">
+      <button id="send">Envoyer</button>
+      <button id="refreshDocs">Rafraîchir bibliothèque</button>
+    </div>
+
+    <div class="muted" style="margin-top:10px;">
+      Astuce : demande “dans quel document et quelle page…”, ou “résume les points clés avec citations”.
+    </div>
+  </section>
+
+  <aside class="card">
+    <h3>Upload PDF</h3>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+      <input type="file" name="file" accept="application/pdf" />
+      <button type="submit">Uploader & ingérer</button>
+    </form>
+
+    <hr style="border:none;border-top:1px solid #e6e8ef; margin:14px 0;">
+
+    <h3>Bibliothèque</h3>
+    <div id="docs"></div>
+
+    <hr style="border:none;border-top:1px solid #e6e8ef; margin:14px 0;">
+
+    <h3>Détails (Chroma)</h3>
+    <div id="docDetail" class="muted">Clique sur un document pour voir les chunks/pages et des extraits.</div>
+  </aside>
+</main>
+
+<script>
+const chatlog = document.getElementById("chatlog");
+const msg = document.getElementById("msg");
+const sendBtn = document.getElementById("send");
+const docsDiv = document.getElementById("docs");
+const detailDiv = document.getElementById("docDetail");
+
+function addMessage(text, who="bot", sources=null) {
+  const el = document.createElement("div");
+  el.className = "msg" + (who === "me" ? " me" : "");
+  el.innerHTML = `<pre style="margin:0;">${escapeHtml(text)}</pre>`;
+  if (sources && sources.length) {
+    const s = document.createElement("div");
+    s.className = "sources";
+    s.style.marginTop = "8px";
+    s.innerHTML = `<div><b>Sources (top ${sources.length})</b></div>` + sources.map(src => {
+      const p = src.page ? `p.${src.page}` : "p.?";
+      const sc = (src.score !== null && src.score !== undefined) ? src.score.toFixed(3) : "n/a";
+      return `
+        <div style="margin-top:6px; padding:8px; border:1px solid #e6e8ef; border-radius:10px;">
+          <div>
+            <span class="pill">score ${sc}</span>
+            <span class="pill">${escapeHtml(src.filename || "unknown.pdf")}</span>
+            <span class="pill">${p}</span>
+            <span class="pill">chunk ${src.chunk_id}</span>
+          </div>
+          <div class="muted" style="margin-top:6px;">${escapeHtml(src.preview || "")}</div>
+        </div>
+      `;
+    }).join("");
+    el.appendChild(s);
+  }
+  chatlog.appendChild(el);
+  el.scrollIntoView({behavior:"smooth", block:"end"});
+}
+
+function escapeHtml(str) {
+  return (str || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+}
+
+async function send() {
+  const text = msg.value.trim();
+  if (!text) return;
+  addMessage(text, "me");
+  msg.value = "";
+
+  const r = await fetch("/chat", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({message: text})
+  });
+  const data = await r.json();
+  if (!r.ok) {
+    addMessage("Erreur: " + (data.error || r.statusText));
+    return;
+  }
+  addMessage(data.answer || "(vide)", "bot", data.sources || []);
+}
+
+sendBtn.onclick = send;
+
+async function loadDocs() {
+  const r = await fetch("/docs");
+  const data = await r.json();
+  docsDiv.innerHTML = "";
+  (data.docs || []).forEach(d => {
+    const el = document.createElement("div");
+    el.className = "docitem";
+    el.innerHTML = `
+      <div><b>${escapeHtml(d.filename)}</b></div>
+      <div class="muted">
+        doc_id: <code>${d.doc_id}</code><br/>
+        pages: ${d.pages} • chunks: ${d.chunks} • size: ${d.size_bytes} bytes<br/>
+        ingested_at: ${escapeHtml(d.ingested_at || "")}
+      </div>
+      <div style="margin-top:8px;">
+        <button data-doc="${d.doc_id}">Voir détails</button>
+      </div>
+    `;
+    el.querySelector("button").onclick = () => loadDocDetail(d.doc_id);
+    docsDiv.appendChild(el);
+  });
+}
+
+async function loadDocDetail(docId) {
+  detailDiv.innerHTML = "Chargement…";
+  const r = await fetch(`/doc/${docId}`);
+  const data = await r.json();
+
+  const doc = data.doc || {};
+  const chroma = data.chroma || {};
+  const pages = chroma.unique_pages || [];
+  const samples = chroma.samples || [];
+
+  detailDiv.innerHTML = `
+    <div><b>${escapeHtml(doc.filename || docId)}</b></div>
+    <div class="muted" style="margin-top:6px;">
+      Chunks trouvés dans Chroma: ${chroma.chunks_found || 0}<br/>
+      Pages présentes: ${pages.length ? pages.join(", ") : "(inconnues)"}<br/>
+    </div>
+    <div style="margin-top:10px;"><b>Extraits de chunks</b></div>
+    ${samples.map(s => `
+      <div style="margin-top:8px; padding:10px; border:1px solid #e6e8ef; border-radius:10px;">
+        <div class="muted">
+          ${escapeHtml(s.filename || "")} • page ${s.page || "?"} • chunk ${s.chunk_id}
+        </div>
+        <div style="margin-top:6px;">${escapeHtml(s.preview || "")}</div>
+      </div>
+    `).join("")}
+    <details style="margin-top:10px;">
+      <summary>Afficher métadonnées brutes (debug)</summary>
+      <pre>${escapeHtml(JSON.stringify(samples.map(x => x.metadata), null, 2))}</pre>
+    </details>
+  `;
+}
+
+document.getElementById("refreshDocs").onclick = loadDocs;
+loadDocs();
+</script>
+</body>
+</html>
+
